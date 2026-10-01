@@ -1,0 +1,17 @@
+{% extends "base.html" %}{% block content %}
+<div class="bar"><h1>{{ 'Editar gasto' if expense.id else 'Nuevo gasto' }}</h1></div>
+<form class="card" id="expense-form" method="post" action="/expenses/save"><input type="hidden" name="id" value="{{ expense.id or 0 }}">
+<div class="form-grid">
+<div><label>Fecha</label><input type="date" name="date" value="{{ expense.date.isoformat() }}"></div>
+<div><label>Proveedor</label><select name="supplier_id"><option value="">—</option>{% for s in suppliers %}<option value="{{ s.id }}" {{ 'selected' if s.id == expense.supplier_id }}>{{ s.name }}</option>{% endfor %}</select><small><a href="/contacts/new?kind=supplier">+ nuevo proveedor</a></small></div>
+<div><label>Nº factura proveedor</label><input name="reference" value="{{ expense.reference or '' }}"></div>
+<div class="full"><label>Concepto *</label><input name="concept" value="{{ expense.concept or '' }}" required></div>
+<div><label>Categoría</label><select name="category">{% for c in EXPENSE_CATEGORIES %}<option {{ 'selected' if c == expense.category }}>{{ c }}</option>{% endfor %}</select></div>
+<div><label>Base imponible</label><input name="base" value="{{ expense.base or 0 }}" inputmode="decimal"></div>
+<div><label>IVA %</label><input name="vat_rate" value="{{ expense.vat_rate }}" inputmode="decimal"></div>
+<div><label>IRPF % (retención)</label><input name="irpf_rate" value="{{ expense.irpf_rate }}" inputmode="decimal"></div>
+<div><label>Total</label><div style="padding:8px"><b id="exp-total">0,00</b> €</div></div>
+<div><label>&nbsp;</label><label style="display:flex;gap:8px;align-items:center;color:var(--text)"><input type="checkbox" name="paid" style="width:auto" {{ 'checked' if expense.paid }}> Pagado</label></div>
+<div class="full"><label>Notas</label><textarea name="notes" rows="2">{{ expense.notes or '' }}</textarea></div></div>
+<p><button class="btn primary">Guardar</button> <a class="btn" href="/expenses">Cancelar</a></p></form>
+{% endblock %}

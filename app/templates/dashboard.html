@@ -1,0 +1,40 @@
+{% extends "base.html" %}{% block content %}
+<div class="bar"><h1>Panel</h1>
+  <form method="get" class="filters" style="margin:0">
+    <select name="year" onchange="this.form.submit()">{% for y in years %}<option value="{{ y }}" {{ 'selected' if y == year }}>{{ y }}</option>{% endfor %}</select>
+    <select name="quarter" onchange="this.form.submit()">
+      <option value="0">Todo el año</option>{% for q in [1,2,3,4] %}<option value="{{ q }}" {{ 'selected' if q == quarter }}>{{ q }}T</option>{% endfor %}
+    </select>
+  </form>
+</div>
+<div class="grid">
+  <div class="stat"><small>Ingresos (base)</small><b>{{ s.income|money }} €</b></div>
+  <div class="stat"><small>Gastos (base)</small><b>{{ s.expenses|money }} €</b></div>
+  <div class="stat"><small>Resultado</small><b class="{{ 'ok' if s.profit >= 0 else 'bad' }}">{{ s.profit|money }} €</b></div>
+  <div class="stat"><small>Pendiente de cobro</small><b>{{ pending|money }} €</b></div>
+  <div class="stat"><small>Vencido</small><b class="{{ 'bad' if overdue }}">{{ overdue_total|money }} €</b><small>{{ overdue|length }} factura(s)</small></div>
+  <div class="stat"><small>Gastos sin pagar</small><b>{{ unpaid_expenses|money }} €</b></div>
+</div>
+<div class="grid">
+  <div class="card"><h2>IVA {{ year }}{% if quarter %} · {{ quarter }}T{% endif %}</h2>
+    <div class="totals" style="margin:0;max-width:none">
+      <div><span>IVA repercutido (ventas)</span><span>{{ s.vat_out|money }} €</span></div>
+      <div><span>IVA soportado (gastos)</span><span>{{ s.vat_in|money }} €</span></div>
+      <div class="grand"><span>{{ 'A ingresar' if s.vat_balance >= 0 else 'A compensar' }}</span><span>{{ s.vat_balance|money }} €</span></div>
+      <div class="muted"><span>IRPF retenido en tus facturas</span><span>{{ s.irpf_withheld|money }} €</span></div>
+    </div></div>
+  <div class="card"><h2>Embudo de ventas</h2>
+    <p style="margin:0"><b style="font-size:22px">{{ pipeline|money }} €</b><br><span class="muted">{{ open_deals }} oportunidades abiertas</span></p>
+    <p><a href="/crm">Ver tablero →</a></p></div>
+</div>
+<div class="card"><h2>Ingresos y gastos por mes</h2>
+  <div class="bars">{% for m in monthly %}
+    <div class="m" title="{{ m.label }}: ingresos {{ m.income|money }} € · gastos {{ m.expenses|money }} €">
+      <div class="pair"><i class="inc" style="height:{{ m.income_pct }}%"></i><i class="exp" style="height:{{ m.expenses_pct }}%"></i></div><small>{{ m.label }}</small></div>
+  {% endfor %}</div>
+  <p class="muted" style="margin:8px 0 0"><span style="color:var(--accent)">■</span> Ingresos &nbsp; <span style="color:#f59e0b">■</span> Gastos</p>
+</div>
+{% if overdue %}<div class="card"><h2>Facturas vencidas</h2><div class="table-wrap"><table>
+  {% for x in overdue %}<tr><td><a href="/documents/{{ x.id }}">{{ x.label }}</a></td><td>{{ x.contact.name if x.contact }}</td><td>{{ x.due_date.strftime('%d/%m/%Y') }}</td><td class="n">{{ x.total|money }} €</td></tr>{% endfor %}
+</table></div></div>{% endif %}
+{% endblock %}

@@ -1,0 +1,14 @@
+{% extends "base.html" %}{% set inv = doc_type == 'invoice' %}{% block content %}
+<div class="bar"><h1>{{ 'Facturas' if inv else 'Presupuestos' }}</h1><a class="btn primary" href="/documents/new?type={{ doc_type }}">{{ 'Nueva factura' if inv else 'Nuevo presupuesto' }}</a></div>
+<form class="filters" method="get"><input name="q" value="{{ q }}" placeholder="Buscar nº o cliente">
+<input name="year" value="{{ year }}" placeholder="Año" size="5">
+<select name="status" onchange="this.form.submit()"><option value="">Todos los estados</option>{% for k, v in (({'draft':'Borrador','issued':'Emitida','paid':'Cobrada'}) if inv else ({'draft':'Borrador','sent':'Enviado','accepted':'Aceptado','rejected':'Rechazado'})).items() %}<option value="{{ k }}" {{ 'selected' if status==k }}>{{ v }}</option>{% endfor %}</select>
+<button class="btn">Filtrar</button></form>
+<div class="card table-wrap"><table><tr><th>Nº</th><th>Cliente</th><th>Fecha</th>{% if inv %}<th>Vence</th>{% endif %}<th>Estado</th><th class="n">Total</th></tr>
+{% for x in docs %}<tr><td><a href="/documents/{{ x.id }}">{{ x.label }}</a></td><td>{{ x.contact.name if x.contact else '—' }}</td><td>{{ x.issue_date.strftime('%d/%m/%Y') }}</td>
+{% if inv %}<td>{{ x.due_date.strftime('%d/%m/%Y') if x.due_date }}</td>{% endif %}
+<td>{% if x.overdue %}<span class="badge overdue">Vencida</span>{% else %}<span class="badge {{ x.status }}">{{ x.status_label }}</span>{% endif %}</td><td class="n">{{ x.total|money }} €</td></tr>
+{% else %}<tr><td colspan="6" class="muted">Nada que mostrar.</td></tr>{% endfor %}
+<tr><td colspan="{{ 5 if inv else 4 }}" class="right"><b>Total</b></td><td class="n"><b>{{ total|money }} €</b></td></tr></table></div>
+{% if inv %}<p class="muted">Pendiente de cobro en esta vista: <b>{{ pending|money }} €</b></p>{% endif %}
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% block content %}
+<div class="bar"><h1>Datos de la empresa</h1></div>{% if saved %}<div class="flash">Guardado.</div>{% endif %}
+<form class="card" method="post" action="/settings"><div class="form-grid">
+<div><label>Nombre *</label><input name="name" value="{{ company.name }}" required></div><div><label>NIF/CIF</label><input name="tax_id" value="{{ company.tax_id }}"></div>
+<div><label>Email</label><input name="email" value="{{ company.email }}"></div><div><label>Teléfono</label><input name="phone" value="{{ company.phone }}"></div>
+<div class="full"><label>Dirección fiscal</label><textarea name="address" rows="2">{{ company.address }}</textarea></div>
+<div class="full"><label>IBAN (aparece en las facturas)</label><input name="iban" value="{{ company.iban }}"></div>
+<div><label>Serie de facturas</label><input name="invoice_series" value="{{ company.invoice_series }}"></div><div><label>Serie de presupuestos</label><input name="quote_series" value="{{ company.quote_series }}"></div>
+<div><label>IVA por defecto %</label><input name="default_vat" value="{{ company.default_vat }}"></div><div><label>Días de pago por defecto</label><input type="number" name="payment_days" value="{{ company.payment_days }}" min="0"></div></div>
+<p><button class="btn primary">Guardar</button></p></form>{% endblock %}

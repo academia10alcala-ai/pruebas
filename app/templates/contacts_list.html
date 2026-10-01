@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block content %}
+<div class="bar"><h1>Contactos</h1><a class="btn primary" href="/contacts/new">Nuevo contacto</a></div>
+<form class="filters" method="get"><input name="q" value="{{ q }}" placeholder="Buscar nombre, NIF, email">
+<select name="kind" onchange="this.form.submit()"><option value="">Todos</option><option value="client" {{ 'selected' if kind=='client' }}>Clientes</option><option value="supplier" {{ 'selected' if kind=='supplier' }}>Proveedores</option></select>
+<button class="btn">Buscar</button></form>
+<div class="card table-wrap"><table><tr><th>Nombre</th><th>Tipo</th><th>NIF/CIF</th><th>Email</th><th>Teléfono</th></tr>
+{% for c in contacts %}<tr><td><a href="/contacts/{{ c.id }}">{{ c.name }}</a></td><td>{{ {'client':'Cliente','supplier':'Proveedor','both':'Ambos'}[c.kind] }}</td><td>{{ c.tax_id }}</td><td>{{ c.email }}</td><td>{{ c.phone }}</td></tr>
+{% else %}<tr><td colspan="5" class="muted">Sin contactos.</td></tr>{% endfor %}</table></div>
+{% endblock %}

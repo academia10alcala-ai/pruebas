@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% block content %}
+<div class="bar"><h1>{{ deal.title or 'Nueva oportunidad' }}</h1>
+{% if deal.id %}<form class="inline" method="post" action="/crm/deals/{{ deal.id }}/quote"><button class="btn">Crear presupuesto</button></form>{% endif %}</div>
+<form class="card" method="post" action="/crm/deals/save"><input type="hidden" name="id" value="{{ deal.id or 0 }}"><div class="form-grid">
+<div class="full"><label>Título *</label><input name="title" value="{{ deal.title or '' }}" required></div>
+<div><label>Contacto</label><select name="contact_id"><option value="">—</option>{% for c in contacts %}<option value="{{ c.id }}" {{ 'selected' if c.id == deal.contact_id }}>{{ c.name }}</option>{% endfor %}</select><small><a href="/contacts/new">+ nuevo contacto</a></small></div>
+<div><label>Valor estimado (€)</label><input name="value" value="{{ deal.value or 0 }}" inputmode="decimal"></div>
+<div><label>Etapa</label><select name="stage">{% for k, v in STAGES %}<option value="{{ k }}" {{ 'selected' if k == deal.stage }}>{{ v }}</option>{% endfor %}</select></div>
+<div><label>Cierre previsto</label><input type="date" name="expected_close" value="{{ deal.expected_close.isoformat() if deal.expected_close }}"></div>
+<div class="full"><label>Notas</label><textarea name="notes" rows="2">{{ deal.notes or '' }}</textarea></div></div>
+<p><button class="btn primary">Guardar</button> <a class="btn" href="/crm">Cancelar</a></p></form>
+{% if deal.id %}<div class="card"><h2>Seguimiento</h2>
+<form method="post" action="/crm/deals/{{ deal.id }}/activity" class="filters"><input name="text" placeholder="Llamada, reunión, correo enviado…" style="flex:1" required><button class="btn">Añadir</button></form>
+{% for a in deal.activities %}<p style="margin:6px 0"><span class="muted">{{ a.created_at.strftime('%d/%m/%Y %H:%M') }}</span> — {{ a.text }}</p>{% else %}<p class="muted">Sin actividad.</p>{% endfor %}</div>
+<form method="post" action="/crm/deals/{{ deal.id }}/delete" data-confirm="¿Eliminar oportunidad?"><button class="btn danger">Eliminar</button></form>{% endif %}
+{% endblock %}

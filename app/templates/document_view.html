@@ -1,0 +1,23 @@
+{% extends "base.html" %}{% set inv = doc.doc_type == 'invoice' %}{% block content %}
+<div class="bar"><h1>{{ 'Factura' if inv else 'Presupuesto' }} {{ doc.label }} {% if doc.overdue %}<span class="badge overdue">Vencida</span>{% else %}<span class="badge {{ doc.status }}">{{ doc.status_label }}</span>{% endif %}</h1>
+<a class="btn" href="/documents/{{ doc.id }}/pdf" target="_blank">PDF</a>
+{% if editable %}<a class="btn" href="/documents/{{ doc.id }}?edit=1">Editar</a>{% endif %}
+{% if doc.status == 'draft' %}<form class="inline" method="post" action="/documents/{{ doc.id }}/issue" data-confirm="Se asignará el número correlativo y ya no podrás editarla. ¿Continuar?"><button class="btn primary" {{ 'disabled' if not (doc.contact_id and doc.lines) }}>{{ 'Emitir factura' if inv else 'Marcar enviado' }}</button></form>{% endif %}
+{% if inv and doc.status == 'issued' %}<form class="inline" method="post" action="/documents/{{ doc.id }}/pay"><button class="btn primary">Marcar cobrada</button></form>{% endif %}
+{% if inv and doc.status == 'paid' %}<form class="inline" method="post" action="/documents/{{ doc.id }}/unpay"><button class="btn">Deshacer cobro</button></form>{% endif %}
+{% if not inv and doc.number %}{% if not converted %}<form class="inline" method="post" action="/documents/{{ doc.id }}/to-invoice"><button class="btn primary">Convertir en factura</button></form>{% endif %}
+{% if doc.status == 'sent' %}<form class="inline" method="post" action="/documents/{{ doc.id }}/quote-status/accepted"><button class="btn">Aceptado</button></form><form class="inline" method="post" action="/documents/{{ doc.id }}/quote-status/rejected"><button class="btn">Rechazado</button></form>{% endif %}{% endif %}
+{% if not inv or doc.status == 'draft' %}<form class="inline" method="post" action="/documents/{{ doc.id }}/delete" data-confirm="¿Eliminar?"><button class="btn danger">Eliminar</button></form>{% endif %}</div>
+{% if source %}<p class="muted">Origen: presupuesto <a href="/documents/{{ source.id }}">{{ source.label }}</a></p>{% endif %}
+{% if converted %}<p class="muted">Facturado en <a href="/documents/{{ converted.id }}">{{ converted.label }}</a></p>{% endif %}
+<div class="card"><div class="doc-head"><div><b>{{ company.name }}</b><br><span class="muted">{{ company.tax_id }}<br>{{ company.address }}</span></div>
+<div><b>{{ doc.contact.name if doc.contact }}</b><br><span class="muted">{{ doc.contact.tax_id if doc.contact }}<br>{{ doc.contact.address if doc.contact }}</span></div>
+<div class="right">Fecha: {{ doc.issue_date.strftime('%d/%m/%Y') }}<br>{% if doc.due_date %}{{ 'Vence' if inv else 'Válido hasta' }}: {{ doc.due_date.strftime('%d/%m/%Y') }}{% endif %}{% if doc.paid_date %}<br>Cobrada: {{ doc.paid_date.strftime('%d/%m/%Y') }}{% endif %}</div></div></div>
+<div class="card table-wrap"><table><tr><th>Descripción</th><th class="n">Cant.</th><th class="n">Precio</th><th class="n">Dto %</th><th class="n">IVA %</th><th class="n">Importe</th></tr>
+{% for l in doc.lines %}<tr><td>{{ l.description }}</td><td class="n">{{ l.quantity|money }}</td><td class="n">{{ l.unit_price|money }}</td><td class="n">{{ l.discount|money }}</td><td class="n">{{ l.vat_rate|money }}</td><td class="n">{{ l.base|money }}</td></tr>{% endfor %}</table>
+<div class="totals" style="margin-top:12px"><div><span>Base imponible</span><span>{{ doc.subtotal|money }}</span></div>
+{% for rate, base, quota in doc.vat_breakdown %}<div><span>IVA {{ rate|money }}% s/ {{ base|money }}</span><span>{{ quota|money }}</span></div>{% endfor %}
+{% if doc.irpf_rate %}<div><span>IRPF -{{ doc.irpf_rate|money }}%</span><span>-{{ doc.irpf_total|money }}</span></div>{% endif %}
+<div class="grand"><span>Total</span><span>{{ doc.total|money }} €</span></div></div></div>
+{% if doc.notes %}<div class="card">{{ doc.notes }}</div>{% endif %}
+{% endblock %}

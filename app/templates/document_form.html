@@ -1,0 +1,21 @@
+{% extends "base.html" %}{% set inv = doc.doc_type == 'invoice' %}{% block content %}
+<div class="bar"><h1>{{ ('Factura' if inv else 'Presupuesto') ~ (' ' ~ doc.label if doc.number else '') }}</h1></div>
+<form method="post" action="/documents/save"><input type="hidden" name="id" value="{{ doc.id or 0 }}"><input type="hidden" name="doc_type" value="{{ doc.doc_type }}">
+<div class="card"><div class="form-grid">
+<div><label>Cliente *</label><select name="contact_id" required><option value="">— elegir —</option>{% for c in clients %}<option value="{{ c.id }}" {{ 'selected' if c.id == doc.contact_id }}>{{ c.name }}</option>{% endfor %}</select><small><a href="/contacts/new">+ nuevo cliente</a></small></div>
+<div><label>Fecha</label><input type="date" name="issue_date" value="{{ doc.issue_date.isoformat() }}"></div>
+<div><label>{{ 'Vencimiento' if inv else 'Válido hasta' }}</label><input type="date" name="due_date" value="{{ doc.due_date.isoformat() if doc.due_date }}"></div>
+<div><label>Retención IRPF %</label><input name="irpf_rate" value="{{ doc.irpf_rate }}" inputmode="decimal"></div></div></div>
+<div class="card table-wrap lines"><table><thead><tr><th>Descripción</th><th class="n">Cant.</th><th class="n">Precio</th><th class="n">Dto %</th><th class="n">IVA %</th><th class="n">Importe</th><th></th></tr></thead>
+<tbody id="lines-body">{% for l in doc.lines %}<tr>
+<td><input class="desc" name="description" value="{{ l.description }}"></td>
+<td><input class="num" name="quantity" value="{{ l.quantity }}" inputmode="decimal"></td>
+<td><input class="num" name="unit_price" value="{{ l.unit_price }}" inputmode="decimal"></td>
+<td><input class="num" name="discount" value="{{ l.discount }}" inputmode="decimal"></td>
+<td><input class="num" name="vat_rate" value="{{ l.vat_rate }}" inputmode="decimal"></td>
+<td class="n line-total">0,00</td><td><button type="button" class="btn sm rm">✕</button></td></tr>{% endfor %}</tbody></table>
+<p><button type="button" class="btn sm" id="add-line">+ Añadir línea</button></p>
+<div class="totals"><div><span>Base imponible</span><span id="t-sub">0,00</span></div><div><span>IVA</span><span id="t-vat">0,00</span></div><div><span>IRPF</span><span id="t-irpf">0,00</span></div><div class="grand"><span>Total</span><span id="t-total">0,00 €</span></div></div></div>
+<div class="card"><label>Notas (aparecen en el PDF)</label><textarea name="notes" rows="2">{{ doc.notes or '' }}</textarea></div>
+<button class="btn primary">Guardar</button> <a class="btn" href="{{ '/documents/' ~ doc.id if doc.id else ('/invoices' if inv else '/quotes') }}">Cancelar</a></form>
+{% endblock %}

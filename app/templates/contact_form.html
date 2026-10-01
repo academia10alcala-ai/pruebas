@@ -1,0 +1,19 @@
+{% extends "base.html" %}{% block content %}
+<div class="bar"><h1>{{ contact.name or 'Nuevo contacto' }}</h1>
+{% if contact.id %}<a class="btn" href="/documents/new?contact_id={{ contact.id }}">Nueva factura</a><a class="btn" href="/crm/deals/new?contact_id={{ contact.id }}">Nueva oportunidad</a>{% endif %}</div>
+<form class="card" method="post" action="/contacts/save"><input type="hidden" name="id" value="{{ contact.id or 0 }}">
+<div class="form-grid">
+<div><label>Nombre / razón social *</label><input name="name" value="{{ contact.name or '' }}" required></div>
+<div><label>Tipo</label><select name="kind"><option value="client" {{ 'selected' if contact.kind=='client' }}>Cliente</option><option value="supplier" {{ 'selected' if contact.kind=='supplier' }}>Proveedor</option><option value="both" {{ 'selected' if contact.kind=='both' }}>Ambos</option></select></div>
+<div><label>NIF/CIF</label><input name="tax_id" value="{{ contact.tax_id or '' }}"></div>
+<div><label>Email</label><input type="email" name="email" value="{{ contact.email or '' }}"></div>
+<div><label>Teléfono</label><input name="phone" value="{{ contact.phone or '' }}"></div>
+<div class="full"><label>Dirección fiscal</label><textarea name="address" rows="2">{{ contact.address or '' }}</textarea></div>
+<div class="full"><label>Notas</label><textarea name="notes" rows="2">{{ contact.notes or '' }}</textarea></div></div>
+<p><button class="btn primary">Guardar</button> <a class="btn" href="/contacts">Cancelar</a></p></form>
+{% if contact.id %}
+<form method="post" action="/contacts/{{ contact.id }}/delete" data-confirm="¿Eliminar contacto? (no se puede si tiene facturas o gastos)"><button class="btn danger">Eliminar contacto</button></form>
+{% if docs %}<div class="card"><h2>Documentos</h2><table>{% for x in docs %}<tr><td><a href="/documents/{{ x.id }}">{{ x.label }}</a></td><td>{{ 'Factura' if x.doc_type=='invoice' else 'Presupuesto' }}</td><td>{{ x.issue_date.strftime('%d/%m/%Y') }}</td><td><span class="badge {{ x.status }}">{{ x.status_label }}</span></td><td class="n">{{ x.total|money }} €</td></tr>{% endfor %}</table></div>{% endif %}
+{% if expenses %}<div class="card"><h2>Gastos</h2><table>{% for e in expenses %}<tr><td><a href="/expenses/{{ e.id }}">{{ e.concept }}</a></td><td>{{ e.date.strftime('%d/%m/%Y') }}</td><td class="n">{{ e.total|money }} €</td></tr>{% endfor %}</table></div>{% endif %}
+{% if contact.deals %}<div class="card"><h2>Oportunidades</h2><table>{% for x in contact.deals %}<tr><td><a href="/crm/deals/{{ x.id }}">{{ x.title }}</a></td><td>{{ x.stage }}</td><td class="n">{{ x.value|money }} €</td></tr>{% endfor %}</table></div>{% endif %}
+{% endif %}{% endblock %}

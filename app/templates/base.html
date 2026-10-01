@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Gestión{% endblock %}</title>
+<link rel="stylesheet" href="/static/style.css"></head>
+<body>
+{% set p = request.url.path %}
+<nav>
+  <a class="brand" href="/">Gestión</a>
+  <a href="/" class="{{ 'active' if p == '/' }}">Panel</a>
+  <a href="/invoices" class="{{ 'active' if p.startswith('/invoices') }}">Facturas</a>
+  <a href="/quotes" class="{{ 'active' if p.startswith('/quotes') }}">Presupuestos</a>
+  <a href="/expenses" class="{{ 'active' if p.startswith('/expenses') }}">Gastos</a>
+  <a href="/crm" class="{{ 'active' if p.startswith('/crm') }}">Embudo de ventas</a>
+  <a href="/contacts" class="{{ 'active' if p.startswith('/contacts') }}">Contactos</a>
+  <span class="sp"></span>
+  <a href="/settings" class="{{ 'active' if p.startswith('/settings') }}">Empresa</a>
+</nav>
+<main>{% block content %}{% endblock %}</main>
+<script src="/static/app.js"></script>
+</body></html>

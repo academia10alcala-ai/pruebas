@@ -1,0 +1,10 @@
+{% extends "base.html" %}{% block content %}
+<div class="bar"><h1>Embudo de ventas</h1><a class="btn primary" href="/crm/deals/new">Nueva oportunidad</a></div>
+<div class="grid"><div class="stat"><small>En curso</small><b>{{ open_value|money }} €</b></div><div class="stat"><small>Ganado</small><b class="ok">{{ won_value|money }} €</b></div>
+<div class="stat"><small>Tasa de cierre</small><b>{{ (win_rate ~ ' %') if win_rate is not none else '—' }}</b></div></div>
+<div class="board">{% for c in columns %}<div class="col" data-stage="{{ c.key }}">
+<header><strong>{{ c.label }}</strong><small>{{ c.deals|length }} · {{ c.total|money }} €</small></header>
+{% for x in c.deals %}<div class="deal" draggable="true" data-id="{{ x.id }}"><a href="/crm/deals/{{ x.id }}"><b>{{ x.title }}</b></a><small>{{ x.contact.name if x.contact else 'Sin contacto' }}</small><br><small>{{ x.value|money }} €{% if x.expected_close %} · {{ x.expected_close.strftime('%d/%m') }}{% endif %}</small></div>{% endfor %}
+<a class="muted" href="/crm/deals/new?stage={{ c.key }}">+ añadir</a></div>{% endfor %}</div>
+<p class="muted">Arrastra las tarjetas entre columnas para cambiar de etapa.</p>
+{% endblock %}
