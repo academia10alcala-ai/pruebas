@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from ..db import get_db
 from ..money import d
+from ..models import DEFAULT_BRAND_COLOR, DEFAULT_BRAND_COLOR2
 from ..web import get_company, render, valid_color
 
 router = APIRouter(prefix="/settings")
@@ -19,7 +20,7 @@ async def save(
     name: str = Form(...), tax_id: str = Form(""), address: str = Form(""), email: str = Form(""),
     phone: str = Form(""), iban: str = Form(""), invoice_series: str = Form("F"),
     quote_series: str = Form("P"), rectify_series: str = Form("R"),
-    brand_color: str = Form("#2563eb"), brand_color2: str = Form("#1f2937"),
+    brand_color: str = Form(DEFAULT_BRAND_COLOR), brand_color2: str = Form(DEFAULT_BRAND_COLOR2),
     logo: UploadFile | None = File(None), remove_logo: str = Form(""), default_vat: str = Form("21"), payment_days: int = Form(30),
     db: Session = Depends(get_db),
 ):
@@ -27,8 +28,8 @@ async def save(
     c.name, c.tax_id, c.address, c.email, c.phone, c.iban = name, tax_id, address, email, phone, iban
     c.invoice_series, c.quote_series = invoice_series.strip() or "F", quote_series.strip() or "P"
     c.rectify_series = rectify_series.strip() or "R"
-    c.brand_color = valid_color(brand_color, "#2563eb")
-    c.brand_color2 = valid_color(brand_color2, "#1f2937")
+    c.brand_color = valid_color(brand_color, DEFAULT_BRAND_COLOR)
+    c.brand_color2 = valid_color(brand_color2, DEFAULT_BRAND_COLOR2)
     if remove_logo:
         c.logo, c.logo_mime = None, ""
     elif logo is not None and logo.filename:

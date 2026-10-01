@@ -248,7 +248,7 @@ def test_branding_logo_and_colors(client):
     assert "error=logo" in bad.headers["location"] and client.get("/logo").status_code == 200
     # color invalido -> se usa el valor por defecto
     client.post("/settings", data={**base, "brand_color": "rojo"})
-    assert "--accent:#2563eb" in client.get("/").text
+    assert "--accent:#2b4975" in client.get("/").text
     client.post("/settings", data={**base, "remove_logo": "on"})
     assert client.get("/logo").status_code == 404
 
@@ -270,4 +270,4 @@ def test_old_database_gets_new_columns(tmp_path):
     finally:
         dbmod.engine = original
     assert {"logo", "brand_color", "rectify_series"} <= cols
-    assert tuple(row) == ("R", "#2563eb")  # las filas existentes reciben el valor por defecto
+    assert tuple(row) == ("R", "#2b4975")  # las filas existentes reciben el valor por defecto

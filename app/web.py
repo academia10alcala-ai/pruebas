@@ -64,11 +64,13 @@ def valid_color(value: str | None, fallback: str) -> str:
 
 def brand(company: models.Company) -> dict:
     """Colores y logo de la marca; calcula si el texto sobre el color principal debe ser claro u oscuro."""
-    color = valid_color(company.brand_color, "#2563eb")
+    color = valid_color(company.brand_color, models.DEFAULT_BRAND_COLOR)
     r, g, b = (int(color[i:i + 2], 16) for i in (1, 3, 5))
     luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+    # en modo oscuro el color principal se aclara para que enlaces y botones se lean bien
+    light = "#" + "".join(f"{int(c + (255 - c) * 0.45):02x}" for c in (r, g, b))
     return {
-        "name": company.name, "color": color, "color2": valid_color(company.brand_color2, "#1f2937"),
+        "name": company.name, "color": color, "color_dark": light, "color2": valid_color(company.brand_color2, models.DEFAULT_BRAND_COLOR2),
         "on_color": "#111827" if luminance > 0.6 else "#ffffff",
         "logo_version": len(company.logo) if company.logo else 0,
     }

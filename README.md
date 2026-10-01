@@ -54,7 +54,7 @@ APP_PASSWORD=tu-clave uvicorn app.main:app --host 0.0.0.0 --port 8000
 ## Marca (logo y colores)
 
 En **Empresa**: sube tu logo (PNG o JPG) y elige color principal (botones, enlaces) y secundario (cabeceras, PDF).
-El logo aparece en la barra superior, en el icono de la app y en el PDF de facturas y presupuestos.
+Por defecto usa azul `#2b4975` y rojo `#e6354f` sobre fondo blanco. El logo aparece en la barra superior, en el icono de la app y en el PDF de facturas y presupuestos.
 
 ## Facturas rectificativas
 

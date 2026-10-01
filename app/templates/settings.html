@@ -10,8 +10,8 @@
 <div class="full"><h2 style="margin:8px 0 0">Imagen de marca</h2></div>
 <div><label>Logo (PNG o JPG, máx. 2 MB)</label><input type="file" name="logo" accept="image/png,image/jpeg">
 {% if company.logo %}<p><img src="/logo?v={{ brand.logo_version }}" alt="logo" style="max-height:60px;background:#fff;padding:4px;border-radius:6px"><br><label style="display:inline"><input type="checkbox" name="remove_logo" style="width:auto"> Quitar logo</label></p>{% endif %}</div>
-<div><label>Color principal (botones, enlaces)</label><input type="color" name="brand_color" value="{{ company.brand_color or '#2563eb' }}" style="height:42px"></div>
-<div><label>Color secundario (cabeceras, PDF)</label><input type="color" name="brand_color2" value="{{ company.brand_color2 or '#1f2937' }}" style="height:42px"></div>
+<div><label>Color principal (botones, enlaces)</label><input type="color" name="brand_color" value="{{ company.brand_color or '#2b4975' }}" style="height:42px"></div>
+<div><label>Color secundario (acentos, cabeceras del PDF)</label><input type="color" name="brand_color2" value="{{ company.brand_color2 or '#e6354f' }}" style="height:42px"></div>
 <div class="full"></div>
 <div><label>IVA por defecto %</label><input name="default_vat" value="{{ company.default_vat }}"></div><div><label>Días de pago por defecto</label><input type="number" name="payment_days" value="{{ company.payment_days }}" min="0"></div></div>
 <p><button class="btn primary">Guardar</button></p></form>{% endblock %}

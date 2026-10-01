@@ -20,6 +20,10 @@ class Money(TypeDecorator):
         return None if value is None else Decimal(value)
 
 
+# Marca por defecto (Academia 10): azul principal, rojo secundario, fondo blanco
+DEFAULT_BRAND_COLOR = "#2b4975"
+DEFAULT_BRAND_COLOR2 = "#e6354f"
+
 STAGES = [
     ("nuevo", "Nuevo"),
     ("contactado", "Contactado"),
@@ -57,8 +61,8 @@ class Company(Base):
     rectify_series: Mapped[str] = mapped_column(String(10), default="R")
     logo: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
     logo_mime: Mapped[str] = mapped_column(String(30), default="")
-    brand_color: Mapped[str] = mapped_column(String(7), default="#2563eb")   # botones, enlaces
-    brand_color2: Mapped[str] = mapped_column(String(7), default="#1f2937")  # cabeceras, PDF
+    brand_color: Mapped[str] = mapped_column(String(7), default=DEFAULT_BRAND_COLOR)    # botones, enlaces
+    brand_color2: Mapped[str] = mapped_column(String(7), default=DEFAULT_BRAND_COLOR2)  # acentos, cabeceras del PDF
 
 
 class Contact(Base):

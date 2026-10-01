@@ -8,6 +8,7 @@ from reportlab.platypus import Image, SimpleDocTemplate, Paragraph, Table, Table
 from xml.sax.saxutils import escape
 from reportlab.lib.utils import ImageReader
 
+from .models import DEFAULT_BRAND_COLOR, DEFAULT_BRAND_COLOR2
 from .money import fmt
 
 
@@ -44,7 +45,7 @@ def render_document_pdf(doc, company) -> bytes:
     small = ParagraphStyle("small", parent=ss["Normal"], fontSize=9, leading=12)
     right = ParagraphStyle("right", parent=small, alignment=2)
     title = ParagraphStyle("title", parent=ss["Title"], alignment=0, fontSize=20,
-                           textColor=_color(company.brand_color, "#2563eb"))
+                           textColor=_color(company.brand_color, DEFAULT_BRAND_COLOR))
     kind = doc.kind_name.upper()
 
     story = []
@@ -83,7 +84,7 @@ def render_document_pdf(doc, company) -> bytes:
                      fmt(l.discount), fmt(l.vat_rate), fmt(l.base)])
     t = Table(rows, colWidths=[78 * mm, 16 * mm, 24 * mm, 14 * mm, 14 * mm, 28 * mm], repeatRows=1)
     t.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), _color(company.brand_color2, "#1f2937")),
+        ("BACKGROUND", (0, 0), (-1, 0), _color(company.brand_color2, DEFAULT_BRAND_COLOR2)),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
         ("FONTSIZE", (0, 0), (-1, -1), 9),
         ("ALIGN", (1, 0), (-1, -1), "RIGHT"),
