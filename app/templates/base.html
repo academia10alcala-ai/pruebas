@@ -1,11 +1,15 @@
 <!doctype html>
 <html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{% block title %}Gestión{% endblock %}</title>
-<link rel="stylesheet" href="/static/style.css"></head>
+<title>{% block title %}{{ brand.name }}{% endblock %}</title>
+<meta name="theme-color" content="{{ brand.color2 }}">
+<link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials">
+{% if brand.logo_version %}<link rel="icon" href="/logo?v={{ brand.logo_version }}"><link rel="apple-touch-icon" href="/logo?v={{ brand.logo_version }}">{% endif %}
+<link rel="stylesheet" href="/static/style.css">
+<style>:root{--accent:{{ brand.color }};--on-accent:{{ brand.on_color }};--brand2:{{ brand.color2 }}}</style></head>
 <body>
 {% set p = request.url.path %}
 <nav>
-  <a class="brand" href="/">Gestión</a>
+  <a class="brand" href="/">{% if brand.logo_version %}<img src="/logo?v={{ brand.logo_version }}" alt="" style="height:26px;vertical-align:middle;margin-right:6px">{% endif %}{{ brand.name }}</a>
   <a href="/" class="{{ 'active' if p == '/' }}">Panel</a>
   <a href="/invoices" class="{{ 'active' if p.startswith('/invoices') }}">Facturas</a>
   <a href="/quotes" class="{{ 'active' if p.startswith('/quotes') }}">Presupuestos</a>

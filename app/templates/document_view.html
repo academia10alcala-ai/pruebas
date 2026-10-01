@@ -1,13 +1,17 @@
 {% extends "base.html" %}{% set inv = doc.doc_type == 'invoice' %}{% block content %}
-<div class="bar"><h1>{{ 'Factura' if inv else 'Presupuesto' }} {{ doc.label }} {% if doc.overdue %}<span class="badge overdue">Vencida</span>{% else %}<span class="badge {{ doc.status }}">{{ doc.status_label }}</span>{% endif %}</h1>
+<div class="bar"><h1>{{ doc.kind_name }} {{ doc.label }} {% if doc.overdue %}<span class="badge overdue">Vencida</span>{% else %}<span class="badge {{ doc.status }}">{{ doc.status_label }}</span>{% endif %}</h1>
 <a class="btn" href="/documents/{{ doc.id }}/pdf" target="_blank">PDF</a>
 {% if editable %}<a class="btn" href="/documents/{{ doc.id }}?edit=1">Editar</a>{% endif %}
 {% if doc.status == 'draft' %}<form class="inline" method="post" action="/documents/{{ doc.id }}/issue" data-confirm="Se asignará el número correlativo y ya no podrás editarla. ¿Continuar?"><button class="btn primary" {{ 'disabled' if not (doc.contact_id and doc.lines) }}>{{ 'Emitir factura' if inv else 'Marcar enviado' }}</button></form>{% endif %}
-{% if inv and doc.status == 'issued' %}<form class="inline" method="post" action="/documents/{{ doc.id }}/pay"><button class="btn primary">Marcar cobrada</button></form>{% endif %}
+{% if inv and doc.status == 'issued' %}<form class="inline" method="post" action="/documents/{{ doc.id }}/pay"><button class="btn primary">{{ 'Marcar abonada' if doc.is_rectifying else 'Marcar cobrada' }}</button></form>{% endif %}
 {% if inv and doc.status == 'paid' %}<form class="inline" method="post" action="/documents/{{ doc.id }}/unpay"><button class="btn">Deshacer cobro</button></form>{% endif %}
 {% if not inv and doc.number %}{% if not converted %}<form class="inline" method="post" action="/documents/{{ doc.id }}/to-invoice"><button class="btn primary">Convertir en factura</button></form>{% endif %}
 {% if doc.status == 'sent' %}<form class="inline" method="post" action="/documents/{{ doc.id }}/quote-status/accepted"><button class="btn">Aceptado</button></form><form class="inline" method="post" action="/documents/{{ doc.id }}/quote-status/rejected"><button class="btn">Rechazado</button></form>{% endif %}{% endif %}
+{% if inv and doc.number and not doc.is_rectifying %}<details class="inline" style="display:inline-block"><summary class="btn">Rectificar</summary>
+<form method="post" action="/documents/{{ doc.id }}/rectify" class="card" style="position:absolute;z-index:3;width:320px"><label>Motivo</label><input name="reason" placeholder="Error en importe, devolución…"><p><button class="btn primary">Crear rectificativa</button></p></form></details>{% endif %}
 {% if not inv or doc.status == 'draft' %}<form class="inline" method="post" action="/documents/{{ doc.id }}/delete" data-confirm="¿Eliminar?"><button class="btn danger">Eliminar</button></form>{% endif %}</div>
+{% if original %}<p>Rectifica a la factura <a href="/documents/{{ original.id }}">{{ original.label }}</a> ({{ original.issue_date.strftime('%d/%m/%Y') }}). <span class="muted">Motivo: {{ doc.rectify_reason }}</span></p>{% endif %}
+{% if rectifications %}<p>Rectificada por: {% for r in rectifications %}<a href="/documents/{{ r.id }}">{{ r.label }}</a> ({{ r.total|money }} €){{ ', ' if not loop.last }}{% endfor %}</p>{% endif %}
 {% if source %}<p class="muted">Origen: presupuesto <a href="/documents/{{ source.id }}">{{ source.label }}</a></p>{% endif %}
 {% if converted %}<p class="muted">Facturado en <a href="/documents/{{ converted.id }}">{{ converted.label }}</a></p>{% endif %}
 <div class="card"><div class="doc-head"><div><b>{{ company.name }}</b><br><span class="muted">{{ company.tax_id }}<br>{{ company.address }}</span></div>

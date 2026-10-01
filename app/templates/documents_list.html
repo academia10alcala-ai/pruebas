@@ -5,7 +5,7 @@
 <select name="status" onchange="this.form.submit()"><option value="">Todos los estados</option>{% for k, v in (({'draft':'Borrador','issued':'Emitida','paid':'Cobrada'}) if inv else ({'draft':'Borrador','sent':'Enviado','accepted':'Aceptado','rejected':'Rechazado'})).items() %}<option value="{{ k }}" {{ 'selected' if status==k }}>{{ v }}</option>{% endfor %}</select>
 <button class="btn">Filtrar</button></form>
 <div class="card table-wrap"><table><tr><th>Nº</th><th>Cliente</th><th>Fecha</th>{% if inv %}<th>Vence</th>{% endif %}<th>Estado</th><th class="n">Total</th></tr>
-{% for x in docs %}<tr><td><a href="/documents/{{ x.id }}">{{ x.label }}</a></td><td>{{ x.contact.name if x.contact else '—' }}</td><td>{{ x.issue_date.strftime('%d/%m/%Y') }}</td>
+{% for x in docs %}<tr><td><a href="/documents/{{ x.id }}">{{ x.label }}</a>{% if x.is_rectifying %} <span class="badge">rectificativa</span>{% endif %}</td><td>{{ x.contact.name if x.contact else '—' }}</td><td>{{ x.issue_date.strftime('%d/%m/%Y') }}</td>
 {% if inv %}<td>{{ x.due_date.strftime('%d/%m/%Y') if x.due_date }}</td>{% endif %}
 <td>{% if x.overdue %}<span class="badge overdue">Vencida</span>{% else %}<span class="badge {{ x.status }}">{{ x.status_label }}</span>{% endif %}</td><td class="n">{{ x.total|money }} €</td></tr>
 {% else %}<tr><td colspan="6" class="muted">Nada que mostrar.</td></tr>{% endfor %}

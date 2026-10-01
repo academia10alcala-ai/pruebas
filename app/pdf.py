@@ -4,10 +4,32 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import mm
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
+from reportlab.platypus import Image, SimpleDocTemplate, Paragraph, Table, TableStyle, Spacer
 from xml.sax.saxutils import escape
+from reportlab.lib.utils import ImageReader
 
 from .money import fmt
+
+
+def _logo(company, max_w=55 * mm, max_h=22 * mm):
+    """Logo de la empresa escalado para caber en la cabecera (o None)."""
+    if not company.logo:
+        return None
+    try:
+        w, h = ImageReader(BytesIO(company.logo)).getSize()
+        scale = min(max_w / w, max_h / h)
+        img = Image(BytesIO(company.logo), width=w * scale, height=h * scale)
+        img.hAlign = "LEFT"
+        return img
+    except Exception:
+        return None
+
+
+def _color(value, fallback):
+    try:
+        return colors.HexColor(value or fallback)
+    except Exception:
+        return colors.HexColor(fallback)
 
 
 def _p(text, style):
@@ -21,10 +43,19 @@ def render_document_pdf(doc, company) -> bytes:
     ss = getSampleStyleSheet()
     small = ParagraphStyle("small", parent=ss["Normal"], fontSize=9, leading=12)
     right = ParagraphStyle("right", parent=small, alignment=2)
-    title = ParagraphStyle("title", parent=ss["Title"], alignment=0, fontSize=20)
-    kind = "FACTURA" if doc.doc_type == "invoice" else "PRESUPUESTO"
+    title = ParagraphStyle("title", parent=ss["Title"], alignment=0, fontSize=20,
+                           textColor=_color(company.brand_color, "#2563eb"))
+    kind = doc.kind_name.upper()
 
-    story = [Paragraph(kind, title)]
+    story = []
+    logo = _logo(company)
+    if logo:
+        story += [logo, Spacer(1, 4 * mm)]
+    story.append(Paragraph(kind, title))
+    if doc.is_rectifying and doc.rectifies_id:
+        orig = doc.original
+        ref = f"{orig.label} ({orig.issue_date.strftime('%d/%m/%Y')})" if orig else "factura original"
+        story += [_p(f"Rectifica a la factura {ref}. Motivo: {doc.rectify_reason}", small), Spacer(1, 3 * mm)]
     head = Table(
         [[
             [_p(company.name, ParagraphStyle("b", parent=small, fontName="Helvetica-Bold")),
@@ -52,7 +83,7 @@ def render_document_pdf(doc, company) -> bytes:
                      fmt(l.discount), fmt(l.vat_rate), fmt(l.base)])
     t = Table(rows, colWidths=[78 * mm, 16 * mm, 24 * mm, 14 * mm, 14 * mm, 28 * mm], repeatRows=1)
     t.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#1f2937")),
+        ("BACKGROUND", (0, 0), (-1, 0), _color(company.brand_color2, "#1f2937")),
         ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
         ("FONTSIZE", (0, 0), (-1, -1), 9),
         ("ALIGN", (1, 0), (-1, -1), "RIGHT"),

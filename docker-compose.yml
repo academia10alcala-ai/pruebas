@@ -1,0 +1,33 @@
+# Arranque:  docker compose up -d --build
+# Con HTTPS y dominio propio:  docker compose --profile https up -d --build
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      APP_USER: ${APP_USER:-admin}
+      APP_PASSWORD: ${APP_PASSWORD:?Define APP_PASSWORD en el fichero .env (copia .env.example)}
+    volumes:
+      - gestion-data:/data          # aquí vive la base de datos (y el logo): no lo borres
+    ports:
+      - "${PORT:-8000}:8000"
+
+  caddy:                             # HTTPS automático (Let's Encrypt) para acceder desde internet
+    profiles: ["https"]
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [app]
+    environment:
+      DOMAIN: ${DOMAIN:-localhost}   # pon tu dominio real en .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+
+volumes:
+  gestion-data:
+  caddy-data:
+  caddy-config:

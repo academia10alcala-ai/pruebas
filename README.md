@@ -5,7 +5,7 @@ Python + FastAPI + SQLite, interfaz web sencilla (plantillas Jinja, sin build de
 
 ## Funciones
 
-- **Facturas y presupuestos**: líneas con descuento, IVA por línea, retención IRPF, series y numeración
+- **Facturas, rectificativas y presupuestos**: líneas con descuento, IVA por línea, retención IRPF, series y numeración
   correlativa por año (se asigna al emitir), PDF, marcar cobrada, vencidas.
   Un presupuesto se convierte en factura con un clic. Las facturas emitidas no se editan ni se borran.
 - **Gastos**: proveedor, categoría, base/IVA/IRPF, pagado o pendiente, filtros y totales por categoría.
@@ -14,21 +14,62 @@ Python + FastAPI + SQLite, interfaz web sencilla (plantillas Jinja, sin build de
 - **Panel**: ingresos, gastos, resultado, IVA repercutido/soportado por año o trimestre, pendiente de cobro y vencido.
 - **Contactos**: clientes y proveedores con su historial.
 
-## Puesta en marcha
+## Puesta en marcha (Docker, recomendado)
+
+Necesitas [Docker](https://docs.docker.com/get-docker/) en el equipo o servidor donde vaya a correr.
+
+```bash
+cp .env.example .env      # edita .env y cambia APP_PASSWORD
+./start.sh                # en Windows: start.bat
+```
+
+Abre http://localhost:8000, entra con `APP_USER` / `APP_PASSWORD` y rellena **Empresa** (datos fiscales, logo y colores).
+Los datos se guardan en el volumen `gestion-data`, que sobrevive a reinicios y actualizaciones.
+
+### Abrirlo desde cualquier dispositivo
+
+| Situación | Cómo |
+|---|---|
+| Misma wifi/oficina | Abre `http://IP-DEL-EQUIPO:8000` desde el móvil o el portátil. |
+| Desde internet (recomendado) | Un servidor (VPS) con Docker y un dominio apuntando a él. Pon `DOMAIN=gestion.tudominio.com` en `.env` y ejecuta `./start.sh https`. Caddy obtiene y renueva el certificado HTTPS solo. |
+
+**Importante:** si lo expones a internet usa siempre HTTPS (el perfil `https` lo da hecho) y una contraseña larga.
+Sin HTTPS la contraseña viaja sin cifrar.
+
+En el móvil o tablet puedes **instalarlo como app** (Chrome: *Añadir a pantalla de inicio*; Safari: *Compartir → Añadir a pantalla de inicio*).
+
+### Copias de seguridad
+
+```bash
+./backup.sh     # guarda una copia consistente de la base de datos en ./backups
+```
+
+### Sin Docker
 
 ```bash
 pip install -r requirements.txt
-uvicorn app.main:app --reload
+APP_PASSWORD=tu-clave uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 
-Abre http://localhost:8000 y rellena los datos de tu empresa en **Empresa** (aparecen en el PDF).
+## Marca (logo y colores)
+
+En **Empresa**: sube tu logo (PNG o JPG) y elige color principal (botones, enlaces) y secundario (cabeceras, PDF).
+El logo aparece en la barra superior, en el icono de la app y en el PDF de facturas y presupuestos.
+
+## Facturas rectificativas
+
+En una factura emitida, **Rectificar** crea un borrador con serie propia (`R-2026-0001`), enlazado a la original,
+con las líneas en negativo (rectificación por diferencias) y un motivo que sale en el PDF. Puedes ajustar las líneas
+antes de emitirla. Las rectificativas restan automáticamente en el panel (ingresos e IVA).
 
 ## Configuración (variables de entorno)
 
 | Variable | Descripción |
 |---|---|
-| `DATABASE_URL` | Por defecto `sqlite:///./gestion.db` |
-| `APP_USER` / `APP_PASSWORD` | Si se definen ambas, se exige usuario y contraseña (HTTP Basic). **Actívalas si lo expones en internet.** |
+| `APP_USER` / `APP_PASSWORD` | Usuario y contraseña (HTTP Basic). Obligatoria con Docker Compose. |
+| `DATABASE_URL` | Por defecto `sqlite:///./gestion.db` (`/data/gestion.db` en Docker). |
+| `PORT` | Puerto local en Docker (8000). |
+| `DOMAIN` | Dominio para el perfil `https`. |
 
 ## Pruebas
 

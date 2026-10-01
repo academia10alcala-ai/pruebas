@@ -21,3 +21,21 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+def ensure_columns():
+    """Anade columnas nuevas a tablas existentes (migracion minima, sin Alembic)."""
+    from sqlalchemy import inspect, text
+    inspector = inspect(engine)
+    with engine.begin() as conn:
+        for table in Base.metadata.sorted_tables:
+            if not inspector.has_table(table.name):
+                continue
+            existing = {c["name"] for c in inspector.get_columns(table.name)}
+            for col in table.columns:
+                if col.name not in existing:
+                    ddl = col.type.compile(engine.dialect)
+                    conn.execute(text(f'ALTER TABLE {table.name} ADD COLUMN {col.name} {ddl}'))
+                    default = col.default.arg if col.default is not None and col.default.is_scalar else None
+                    if default is not None:
+                        conn.execute(text(f'UPDATE {table.name} SET {col.name} = :v'), {"v": str(default)})

@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from decimal import Decimal
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -73,15 +73,20 @@ def view_document(doc_id: int, request: Request, db: Session = Depends(get_db)):
         return render(request, "document_form.html", doc=doc, clients=_clients(db), editable=True)
     source = db.get(models.Document, doc.source_quote_id) if doc.source_quote_id else None
     converted = db.scalar(select(models.Document).where(models.Document.source_quote_id == doc.id))
+    original = db.get(models.Document, doc.rectifies_id) if doc.rectifies_id else None
+    rectifications = db.scalars(select(models.Document).where(models.Document.rectifies_id == doc.id)
+                                .order_by(models.Document.id)).all()
     return render(request, "document_view.html", doc=doc, editable=_editable(doc), source=source,
-                  converted=converted, company=get_company(db))
+                  converted=converted, company=get_company(db), original=original,
+                  rectifications=rectifications)
 
 
 @router.post("/documents/save")
 async def save_document(request: Request, db: Session = Depends(get_db)):
     form = await request.form()
     doc_id = int(form.get("id") or 0)
-    doc = db.get(models.Document, doc_id) if doc_id else models.Document(doc_type=form.get("doc_type", "invoice"))
+    doc = db.get(models.Document, doc_id) if doc_id else models.Document(
+        doc_type="quote" if form.get("doc_type") == "quote" else "invoice")
     if doc_id and (doc is None or not _editable(doc)):
         return RedirectResponse(f"/documents/{doc_id}", status_code=303)
     company = get_company(db)
@@ -91,6 +96,8 @@ async def save_document(request: Request, db: Session = Depends(get_db)):
     doc.due_date = parse_date(form.get("due_date"))
     doc.irpf_rate = d(form.get("irpf_rate"))
     doc.notes = form.get("notes", "")
+    if doc.rectifies_id:
+        doc.rectify_reason = form.get("rectify_reason", "").strip()[:300]
     doc.series = doc.series or (company.invoice_series if doc.doc_type == "invoice" else company.quote_series)
 
     doc.lines.clear()
@@ -177,6 +184,29 @@ def quote_to_invoice(doc_id: int, db: Session = Depends(get_db)):
     db.add(invoice)
     db.commit()
     return RedirectResponse(f"/documents/{invoice.id}?edit=1", status_code=303)
+
+
+@router.post("/documents/{doc_id}/rectify")
+def rectify_invoice(doc_id: int, reason: str = Form(""), db: Session = Depends(get_db)):
+    """Crea una factura rectificativa (por diferencias) con las lineas en negativo.
+
+    Queda en borrador con serie propia; se puede ajustar (p. ej. rectificar solo una linea) antes de emitirla.
+    """
+    original = db.get(models.Document, doc_id)
+    if not original or original.doc_type != "invoice" or original.number is None or original.is_rectifying:
+        return RedirectResponse(f"/documents/{doc_id}", status_code=303)
+    company = get_company(db)
+    rect = models.Document(
+        doc_type="invoice", series=company.rectify_series, contact_id=original.contact_id,
+        issue_date=date.today(), irpf_rate=original.irpf_rate, notes=original.notes,
+        rectifies_id=original.id, rectify_reason=reason.strip()[:300] or "Rectificación de factura",
+        lines=[models.Line(position=l.position, description=l.description, quantity=-l.quantity,
+                           unit_price=l.unit_price, discount=l.discount, vat_rate=l.vat_rate)
+               for l in original.lines],
+    )
+    db.add(rect)
+    db.commit()
+    return RedirectResponse(f"/documents/{rect.id}?edit=1", status_code=303)
 
 
 @router.post("/documents/{doc_id}/delete")

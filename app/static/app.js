@@ -11,6 +11,14 @@
     if (dragged) dragged.classList.remove("dragging");
     board.querySelectorAll(".col").forEach((c) => c.classList.remove("over"));
   });
+  board.addEventListener("change", async (e) => {
+    if (!e.target.classList.contains("move")) return;
+    const res = await fetch(`/crm/deals/${e.target.closest(".deal").dataset.id}/move`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stage: e.target.value }),
+    });
+    if (res.ok) location.reload();
+  });
   board.querySelectorAll(".col").forEach((col) => {
     col.addEventListener("dragover", (e) => { e.preventDefault(); col.classList.add("over"); });
     col.addEventListener("dragleave", () => col.classList.remove("over"));

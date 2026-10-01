@@ -177,3 +177,97 @@ def test_basic_auth_when_configured(client, monkeypatch):
     assert client.get("/").status_code == 401
     assert client.get("/", auth=("admin", "mal")).status_code == 401
     assert client.get("/", auth=("admin", "secreto")).status_code == 200
+    assert client.get("/healthz").status_code == 200  # el healthcheck de Docker no lleva credenciales
+    assert client.get("/manifest.webmanifest").status_code == 401
+
+
+def _png_bytes(color=(200, 30, 30)):
+    from io import BytesIO
+    from PIL import Image
+    buf = BytesIO()
+    Image.new("RGB", (120, 40), color).save(buf, "PNG")
+    return buf.getvalue()
+
+
+def _issue(client, contact_id, **kw):
+    doc_id = make_invoice(client, contact_id, **kw)
+    client.post(f"/documents/{doc_id}/issue")
+    return doc_id
+
+
+def test_rectifying_invoice_flow(client):
+    cid = make_contact(client)
+    orig = _issue(client, cid)  # 2 x 100 + 21% = 242
+    r = client.post(f"/documents/{orig}/rectify", data={"reason": "Error en cantidad"})
+    rect_id = int(r.headers["location"].split("/")[2].split("?")[0])
+    with SessionLocal() as db:
+        rect = db.get(models.Document, rect_id)
+        assert rect.is_rectifying and rect.status == "draft" and rect.series == "R"
+        assert rect.total == Decimal("-242.00") and rect.original.id == orig
+        assert rect.label == "Rectificativa (borrador)"
+    client.post(f"/documents/{rect_id}/issue")
+    with SessionLocal() as db:
+        assert db.get(models.Document, rect_id).label == f"R-{date.today().year}-0001"
+    # la numeracion de la serie F no se ve afectada y el panel netea la factura
+    from app.routers.dashboard import summarize
+    with SessionLocal() as db:
+        s = summarize(db, date.today().year)
+    assert s["income"] == Decimal("0.00") and s["vat_out"] == Decimal("0.00")
+    assert client.get(f"/documents/{orig}").status_code == 200
+    assert client.get(f"/documents/{rect_id}/pdf").content.startswith(b"%PDF")
+
+
+def test_cannot_rectify_draft_or_a_rectification(client):
+    cid = make_contact(client)
+    draft = make_invoice(client, cid)
+    client.post(f"/documents/{draft}/rectify", data={"reason": "x"})
+    with SessionLocal() as db:
+        assert db.query(models.Document).filter(models.Document.rectifies_id.isnot(None)).count() == 0
+    orig = _issue(client, cid)
+    r = client.post(f"/documents/{orig}/rectify", data={"reason": "x"})
+    rect_id = int(r.headers["location"].split("/")[2].split("?")[0])
+    client.post(f"/documents/{rect_id}/issue")
+    client.post(f"/documents/{rect_id}/rectify", data={"reason": "otra"})
+    with SessionLocal() as db:
+        assert db.query(models.Document).filter(models.Document.rectifies_id.isnot(None)).count() == 1
+
+
+def test_branding_logo_and_colors(client):
+    base = {"name": "Mi Marca", "brand_color": "#e11d48", "brand_color2": "#0f172a"}
+    r = client.post("/settings", data=base, files={"logo": ("logo.png", _png_bytes(), "image/png")})
+    assert r.headers["location"] == "/settings?saved=1"
+    assert client.get("/logo").headers["content-type"] == "image/png"
+    page = client.get("/").text
+    assert "--accent:#e11d48" in page and "/logo?v=" in page
+    assert client.get("/manifest.webmanifest").json()["theme_color"] == "#0f172a"
+    cid = make_contact(client)
+    doc = _issue(client, cid)
+    assert client.get(f"/documents/{doc}/pdf").content.startswith(b"%PDF")
+    # un fichero que no es imagen se rechaza y el logo anterior se conserva
+    bad = client.post("/settings", data=base, files={"logo": ("x.png", b"no soy una imagen", "image/png")})
+    assert "error=logo" in bad.headers["location"] and client.get("/logo").status_code == 200
+    # color invalido -> se usa el valor por defecto
+    client.post("/settings", data={**base, "brand_color": "rojo"})
+    assert "--accent:#2563eb" in client.get("/").text
+    client.post("/settings", data={**base, "remove_logo": "on"})
+    assert client.get("/logo").status_code == 404
+
+
+def test_old_database_gets_new_columns(tmp_path):
+    import sqlalchemy as sa
+    import app.db as dbmod
+    old = sa.create_engine(f"sqlite:///{tmp_path}/old.db")
+    with old.begin() as c:
+        c.execute(sa.text("CREATE TABLE company (id INTEGER PRIMARY KEY, name VARCHAR(200))"))
+        c.execute(sa.text("INSERT INTO company (id, name) VALUES (1, 'Vieja SL')"))
+    original = dbmod.engine
+    dbmod.engine = old
+    try:
+        dbmod.ensure_columns()
+        cols = {c["name"] for c in sa.inspect(old).get_columns("company")}
+        with old.connect() as c:
+            row = c.execute(sa.text("SELECT rectify_series, brand_color FROM company")).one()
+    finally:
+        dbmod.engine = original
+    assert {"logo", "brand_color", "rectify_series"} <= cols
+    assert tuple(row) == ("R", "#2563eb")  # las filas existentes reciben el valor por defecto

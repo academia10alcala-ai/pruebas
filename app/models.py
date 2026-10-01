@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import ForeignKey, String, Text, Date, DateTime, Integer, Boolean, TypeDecorator
+from sqlalchemy import ForeignKey, String, Text, Date, DateTime, Integer, Boolean, LargeBinary, TypeDecorator
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .db import Base
@@ -54,6 +54,11 @@ class Company(Base):
     quote_series: Mapped[str] = mapped_column(String(10), default="P")
     default_vat: Mapped[Decimal] = mapped_column(Money, default=Decimal("21"))
     payment_days: Mapped[int] = mapped_column(Integer, default=30)
+    rectify_series: Mapped[str] = mapped_column(String(10), default="R")
+    logo: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True)
+    logo_mime: Mapped[str] = mapped_column(String(30), default="")
+    brand_color: Mapped[str] = mapped_column(String(7), default="#2563eb")   # botones, enlaces
+    brand_color2: Mapped[str] = mapped_column(String(7), default="#1f2937")  # cabeceras, PDF
 
 
 class Contact(Base):
@@ -86,16 +91,31 @@ class Document(Base):
     notes: Mapped[str] = mapped_column(Text, default="")
     paid_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     source_quote_id: Mapped[int | None] = mapped_column(ForeignKey("documents.id"), nullable=True)
+    rectifies_id: Mapped[int | None] = mapped_column(ForeignKey("documents.id"), nullable=True)
+    rectify_reason: Mapped[str] = mapped_column(String(300), default="")
 
     contact: Mapped[Contact | None] = relationship()
+    original: Mapped["Document | None"] = relationship(remote_side=[id], foreign_keys=[rectifies_id])
     lines: Mapped[list["Line"]] = relationship(
         back_populates="document", cascade="all, delete-orphan", order_by="Line.position"
     )
 
     @property
+    def is_rectifying(self) -> bool:
+        return self.rectifies_id is not None
+
+    @property
+    def kind_name(self) -> str:
+        if self.doc_type == "quote":
+            return "Presupuesto"
+        return "Factura rectificativa" if self.is_rectifying else "Factura"
+
+    @property
     def label(self) -> str:
         if self.number is None:
-            return "Borrador" if self.doc_type == "invoice" else "Presupuesto (borrador)"
+            if self.doc_type == "quote":
+                return "Presupuesto (borrador)"
+            return "Rectificativa (borrador)" if self.is_rectifying else "Borrador"
         return f"{self.series}-{self.issue_date.year}-{self.number:04d}"
 
     @property

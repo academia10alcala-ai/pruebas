@@ -13,7 +13,7 @@
 <p><button class="btn primary">Guardar</button> <a class="btn" href="/contacts">Cancelar</a></p></form>
 {% if contact.id %}
 <form method="post" action="/contacts/{{ contact.id }}/delete" data-confirm="¿Eliminar contacto? (no se puede si tiene facturas o gastos)"><button class="btn danger">Eliminar contacto</button></form>
-{% if docs %}<div class="card"><h2>Documentos</h2><table>{% for x in docs %}<tr><td><a href="/documents/{{ x.id }}">{{ x.label }}</a></td><td>{{ 'Factura' if x.doc_type=='invoice' else 'Presupuesto' }}</td><td>{{ x.issue_date.strftime('%d/%m/%Y') }}</td><td><span class="badge {{ x.status }}">{{ x.status_label }}</span></td><td class="n">{{ x.total|money }} €</td></tr>{% endfor %}</table></div>{% endif %}
+{% if docs %}<div class="card"><h2>Documentos</h2><table>{% for x in docs %}<tr><td><a href="/documents/{{ x.id }}">{{ x.label }}</a></td><td>{{ x.kind_name }}</td><td>{{ x.issue_date.strftime('%d/%m/%Y') }}</td><td><span class="badge {{ x.status }}">{{ x.status_label }}</span></td><td class="n">{{ x.total|money }} €</td></tr>{% endfor %}</table></div>{% endif %}
 {% if expenses %}<div class="card"><h2>Gastos</h2><table>{% for e in expenses %}<tr><td><a href="/expenses/{{ e.id }}">{{ e.concept }}</a></td><td>{{ e.date.strftime('%d/%m/%Y') }}</td><td class="n">{{ e.total|money }} €</td></tr>{% endfor %}</table></div>{% endif %}
 {% if contact.deals %}<div class="card"><h2>Oportunidades</h2><table>{% for x in contact.deals %}<tr><td><a href="/crm/deals/{{ x.id }}">{{ x.title }}</a></td><td>{{ x.stage }}</td><td class="n">{{ x.value|money }} €</td></tr>{% endfor %}</table></div>{% endif %}
 {% endif %}{% endblock %}
