@@ -14,7 +14,15 @@ Python + FastAPI + SQLite, interfaz web sencilla (plantillas Jinja, sin build de
 - **Panel**: ingresos, gastos, resultado, IVA repercutido/soportado por año o trimestre, pendiente de cobro y vencido.
 - **Contactos**: clientes y proveedores con su historial.
 
-## Puesta en marcha (Docker, recomendado)
+## Puesta en marcha en Windows, sin Docker (la opción más fácil)
+
+1. Instala [Python 3.12](https://www.python.org/downloads/windows/) marcando *Add python.exe to PATH*.
+2. Haz doble clic en `iniciar.bat`. La primera vez instala lo necesario y te pide usuario y contraseña.
+3. Se abre el navegador en http://localhost:8000. Los datos quedan en la carpeta `datos/` (haz copias de ella).
+
+Desde el móvil, en la misma wifi, usa la dirección que muestra la ventana negra.
+
+## Puesta en marcha con Docker (para servidor)
 
 Necesitas [Docker](https://docs.docker.com/get-docker/) en el equipo o servidor donde vaya a correr.
 
@@ -74,6 +82,7 @@ antes de emitirla. Las rectificativas restan automáticamente en el panel (ingre
 ## Pruebas
 
 ```bash
+pip install -r requirements-dev.txt
 python -m pytest
 ```
 

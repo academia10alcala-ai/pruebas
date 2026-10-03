@@ -1,0 +1,27 @@
+PROGRAMA DE GESTION - COMO ABRIRLO EN WINDOWS
+==============================================
+
+SOLO LA PRIMERA VEZ
+1. Instala Python (gratis): https://www.python.org/downloads/windows/
+   Descarga Python 3.12. En la PRIMERA pantalla del instalador, marca la casilla
+   "Add python.exe to PATH" y pulsa "Install Now".
+2. Extrae este ZIP: clic derecho sobre el ZIP -> "Extraer todo".
+   (Importante: no lo abras desde dentro del ZIP; hay que extraerlo.)
+3. Entra en la carpeta extraida y haz doble clic en "iniciar.bat".
+   - Si Windows avisa de "protegio su PC", pulsa "Mas informacion" -> "Ejecutar de todas formas".
+   - Si pide permiso de firewall, pulsa "Permitir" (necesario para abrirlo desde el movil).
+4. Espera unos minutos (descarga componentes; necesita internet).
+5. Escribe un usuario y una contrasena cuando te los pida. Apuntalos.
+6. Se abrira el navegador. Entra con ese usuario y contrasena.
+7. Pulsa "Empresa", rellena tus datos y sube tu logo.
+
+LAS SIGUIENTES VECES
+Doble clic en "iniciar.bat". No cierres la ventana negra mientras uses el programa.
+
+DESDE EL MOVIL (misma wifi)
+En la ventana negra aparece una direccion tipo http://192.168.1.35:8000
+Escribela en el navegador del movil. Solo funciona con el ordenador encendido.
+
+TUS DATOS
+Estan en la carpeta "datos". Copiala de vez en cuando como copia de seguridad.
+No borres esa carpeta.
